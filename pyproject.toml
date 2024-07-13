@@ -1,0 +1,19 @@
+[project]
+name = "google-calendar-api"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "a129924", email = "a129924@gmail.com"},
+]
+dependencies = [
+    "google-api-python-client>=2.137.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.1",
+]
+requires-python = "==3.10.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
