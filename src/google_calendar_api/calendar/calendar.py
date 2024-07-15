@@ -1,7 +1,7 @@
-from typing import Literal, Unpack
+from typing import Literal
 
 from googleapiclient.discovery import Resource
-from typing_extensions import Self
+from typing_extensions import Self, Unpack
 
 from ..schema.calendar import Attendee, Event, Reminders
 from ..types.calendar import EventParam
