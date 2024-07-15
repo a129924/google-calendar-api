@@ -1,7 +1,6 @@
-from typing import Self
-
 from google.auth import credentials
 from googleapiclient.discovery import Resource
+from typing_extensions import Self
 
 __all__ = ["Credentials"]
 
