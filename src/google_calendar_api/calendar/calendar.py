@@ -24,7 +24,7 @@ class Calendar:
         return self.service.events()  # type: ignore
 
     def _serial_event(self, **event_params: Unpack[EventParam]) -> EventParam:
-        return {k: v for k, v in event_params.items() if v}  # type: ignore
+        return {k: v for k, v in event_params.items() if v is not None}  # type: ignore
 
     def get_event(self, calendar_id: str, event_id: str) -> Event:
         """
