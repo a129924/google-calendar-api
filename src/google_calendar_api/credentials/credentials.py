@@ -75,7 +75,11 @@ class Credentials:
         raise FileNotFoundError(f"{credentials_json_path} is not exist")
 
     def need_refresh(self) -> bool:
-        return self.credential.valid and self.credential.expired and self.refresh_token
+        return (
+            self.credential.valid
+            and self.credential.expired
+            and self.credential.refresh_token
+        )
 
     @classmethod
     def from_authorized_user_file(
