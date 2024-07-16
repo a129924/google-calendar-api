@@ -241,9 +241,7 @@ class Calendar:
             )
         )
 
-    def delete_event(self, calendar_id: str, event_id: str) -> bool:
-        from googleapiclient.errors import HttpError
-
+    def delete_event(self, calendar_id: str, event_id: str) -> None:
         """
         delete_event 刪除事件
         doc : https://developers.google.com/calendar/api/v3/reference/events/delete
@@ -251,13 +249,5 @@ class Calendar:
         Args:
             calendar_id (str): 分享時的`calendarID`
             event_id (str): 預計刪除的事件ID
-
-        Returns:
-            bool : 回傳是否刪除
         """
-        try:
-            self.events.delete(calendarId=calendar_id, eventId=event_id).execute()  # type: ignore
-
-            return True
-        except HttpError:
-            return False
+        self.events().delete(calendarId=calendar_id, eventId=event_id).execute()  # type: ignore
