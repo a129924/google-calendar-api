@@ -55,7 +55,7 @@ class Credentials:
         return self
 
     @classmethod
-    def token_from_client_secrets_file(
+    def from_client_secrets_file(
         cls,
         credentials_json_path: str,
         scopes: list[str],
@@ -97,6 +97,13 @@ class Credentials:
             return cls()
 
         raise FileNotFoundError(f"{token_json_path} is not exist")
+
+    def to_json(self) -> str:
+        return self.credential.to_json()
+
+    def to_json_file(self, token_json_path: str) -> None:
+        with open(token_json_path, mode="w+", encoding="UTF-8") as json_file:
+            json_file.write(self.to_json())
 
     def build_service(self, service_name: str, version: str) -> Resource:
         from googleapiclient.discovery import build
