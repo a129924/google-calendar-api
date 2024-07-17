@@ -1,6 +1,7 @@
 from googleapiclient.discovery import Resource
 
 from ...credentials import Credentials
+from ...log import LOGGER
 
 
 class CredentialsService:
@@ -21,6 +22,7 @@ class CredentialsService:
         """
         if self.credentials.need_refresh():
             self.credentials.refresh_token()
+            LOGGER.info(msg="token refresh")
 
             if self.token_json_path:
                 self.to_json_file(self.token_json_path)
