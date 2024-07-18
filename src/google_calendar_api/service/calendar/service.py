@@ -17,6 +17,23 @@ class CalendarService:
         self.calendar = Calendar(service=service)
         self.calendar_id = calendar_id
 
+    def get_event_date_string(self, event: Event, attr: Literal["start", "end"]) -> str:
+        attr_value = getattr(event, attr)
+
+        return getattr(attr_value, "datetime", attr_value.date)
+
+    def process_event_to_event_param(self, event: Event) -> EventParam:
+        return EventParam(
+            summary=event.summary,
+            start_time=self.get_event_date_string(event, "start"),
+            end_time=self.get_event_date_string(event=event, attr="end"),
+            location=event.location,
+            description=event.description,
+            attendees=event.attendees,
+            reminders=event.reminders,
+            time_zone=getattr(event.start, "timeZone", None),
+        )
+
     def add_calendar_event(self, **event_param: Unpack[EventParam]) -> Event:
         if "summary" not in event_param:
             raise KeyError('"summary" key must be exists in event_param')
