@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-__all__ = ["Event", "Attendee", "Reminders"]
+__all__ = ["Event", "Attendee", "Reminders", "QueryEvent"]
 
 
 class Creator(BaseModel):
@@ -79,3 +79,16 @@ class Event(BaseModel):
     attendees: list[Attendee] = []
     reminders: Reminders
     eventType: str
+
+
+class QueryEvent(BaseModel):
+    kind: str
+    etag: str
+    summary: str
+    description: str
+    updated: str
+    timeZone: str
+    accessRole: str
+    defaultReminders: list[ReminderOverride]
+    nextPageToken: str | None = None
+    items: list[Event] = []
