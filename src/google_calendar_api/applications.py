@@ -1,3 +1,6 @@
+from collections.abc import Generator
+from typing import Literal
+
 from googleapiclient.discovery import Resource
 from typing_extensions import Unpack
 
@@ -54,7 +57,7 @@ class GoogleCalendarAPI:
             {"json_file": calendar_config_path, "json_file_encoding": "UTF-8"}
         )()  # type: ignore
 
-        self.calendar = CalendarService(
+        self.calendar_service = CalendarService(
             service=self.service, calendar_id=config.calendar_id
         )
         self.time_zone = config.time_zone
@@ -97,34 +100,62 @@ class GoogleCalendarAPI:
             output_token_json=output_token_json,
         ).get_service("calendar", "v3")
 
-    def replace_calendar_event(
-        self, events: list[Event], **event_param: Unpack[ApplicationAddEventParam]
-    ) -> Event | None:
-        if events:
-            replace_event = events[0].model_copy(update=event_param)  # type: ignore
+    def _replace_calendar_event(
+        self, event: Event, **event_param: Unpack[ApplicationAddEventParam]
+    ) -> Event:
+        if event:
+            replace_event = event.model_copy(update=event_param)  # type: ignore
 
-            return self.calendar.update_calendar_event(
+            return self.calendar_service.update_calendar_event(
                 event_id=replace_event.id,
-                **self.calendar.process_event_to_event_param(event=replace_event),
+                **self.calendar_service.process_event_to_event_param(
+                    event=replace_event
+                ),
             )
 
-        else:
-            return None
+    def get_calendar_event(self, event_id: str) -> Event:
+        return self.calendar_service.get_calendar_event(event_id)
+
+    def get_calendar_events(
+        self,
+        *,
+        time_min: str,
+        time_max: str,
+        max_results: int = 10,
+        order_by: Literal["startTime", "updated"] = "startTime",
+        q: str | None = None,
+    ) -> Generator[Event, None, None]:
+        page_token: str | None = None
+
+        while True:
+            query_event = self.calendar_service.get_calendar_events(
+                time_min=time_min,
+                time_max=time_max,
+                page_token=page_token,
+                max_results=max_results,
+                order_by=order_by,
+                q=q,
+                time_zone=self.time_zone,
+            )
+
+            if page_token := query_event.nextPageToken:
+                yield from query_event.items
+            else:
+                break
 
     def add_calendar_event(
         self, replace: bool = False, **event_param: Unpack[ApplicationAddEventParam]
     ) -> Event | None:
         if replace:
-            query_events = self.calendar.get_calendar_events(
-                time_min=event_param["start_time"],
-                time_max=event_param["end_time"],
-                q=event_param["summary"],
-                time_zone=self.time_zone,
+            return self._replace_calendar_event(
+                event=self.get_calendar_events(
+                    time_min=event_param["start_time"],
+                    time_max=event_param["end_time"],
+                    q=event_param["summary"],
+                ).__next__(),
+                **event_param,
             )
-
-            return self.replace_calendar_event(events=query_events, **event_param)
         else:
-            return self.calendar.add_calendar_event(
+            return self.calendar_service.add_calendar_event(
                 time_zone=self.time_zone, **event_param
             )
-        ...
