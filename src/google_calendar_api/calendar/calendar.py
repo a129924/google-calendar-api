@@ -3,7 +3,7 @@ from typing import Literal
 from googleapiclient.discovery import Resource
 from typing_extensions import Self, Unpack
 
-from ..schema.calendar import Attendee, Event, Reminders
+from ..schema.calendar import Attendee, Event, QueryEvent, Reminders
 from ..types.calendar import EventParam
 
 __all__ = ["Calendar"]
@@ -24,7 +24,9 @@ class Calendar:
         return self.service.events()  # type: ignore
 
     def _serial_event(self, **event_params: Unpack[EventParam]) -> EventParam:
-        return {k: v for k, v in event_params.items() if v is not None}  # type: ignore
+        from ..collection import remove_dict_value_none
+
+        return remove_dict_value_none(event_params)  # type: ignore
 
     def get_event(self, calendar_id: str, event_id: str) -> Event:
         """
@@ -45,6 +47,7 @@ class Calendar:
     def list_events(
         self,
         calendar_id: str = "primary",
+        page_token: str | None = None,
         *,
         time_min: str | None = None,
         time_max: str | None = None,
@@ -54,13 +57,14 @@ class Calendar:
         single_events: bool = True,
         time_zone: str | None = None,
         show_deleted: bool = False,
-    ) -> list[Event]:
+    ) -> QueryEvent:
         """
         list_events Read All events
         doc : https://developers.google.com/calendar/api/v3/reference/events/list
 
         Args:
             calendar_id (str, optional): 分享時的`calendarID` 或者是預設 `primary`. Defaults to "primary".
+            page_token: str | None = None : 結果的下一頁token Defaults to None
             time_min (str | None, optional): 時間區間起始時間 datetime string `example : 2024-07-15T09:00:00-07:00`. Defaults to None.
             time_max (str | None, optional): 時間區間結束時間 datetime string `example : 2024-07-16T09:00:00-07:00`. Defaults to None.
             max_results (int, optional): 最大的回傳數. Defaults to 10.
@@ -71,12 +75,12 @@ class Calendar:
             show_deleted (bool, optional): 如果為True，則包括已刪除的事件. Defaults to False.
 
         Returns:
-            dict[str, Any]: 包含事件列表的字典
+            QueryEvent: 包含事件列表的字典
         """
-        return [
-            Event(**event)
-            for event in self.events.list(  # type: ignore
+        return QueryEvent(
+            **self.events.list(  # type: ignore
                 calendar_id=calendar_id,
+                pageToken=page_token,
                 time_min=time_min,
                 time_max=time_max,
                 max_results=max_results,
@@ -86,7 +90,7 @@ class Calendar:
                 time_zone=time_zone,
                 show_deleted=show_deleted,
             ).execute()
-        ]
+        )
 
     def update_event(
         self,

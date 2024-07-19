@@ -4,7 +4,7 @@ from googleapiclient.discovery import Resource
 from typing_extensions import Unpack
 
 from ...log import LOGGER
-from ...schema.calendar import Event
+from ...schema.calendar import Event, QueryEvent
 from ...types.calendar import EventParam
 
 __all__ = ["CalendarService"]
@@ -55,6 +55,7 @@ class CalendarService:
 
     def get_calendar_events(
         self,
+        page_token: str | None = None,
         time_min: str | None = None,
         time_max: str | None = None,
         max_results: int = 10,
@@ -63,11 +64,12 @@ class CalendarService:
         single_events: bool = True,
         time_zone: str | None = None,
         show_deleted: bool = False,
-    ) -> list[Event]:
+    ) -> QueryEvent:
         LOGGER.info(msg=f"Get all event into {self.calendar_id}")
 
         return self.calendar.list_events(
             calendar_id=self.calendar_id,
+            page_token=page_token,
             time_min=time_min,
             time_max=time_max,
             max_results=max_results,
