@@ -100,18 +100,20 @@ class GoogleCalendarAPI:
             output_token_json=output_token_json,
         ).get_service("calendar", "v3")
 
-    def _replace_calendar_event(
-        self, event: Event, **event_param: Unpack[ApplicationAddEventParam]
+    def replace_calendar_event(
+        self,
+        event_or_event_id: Event | str,
+        **event_param: Unpack[ApplicationAddEventParam],
     ) -> Event:
-        if event:
-            replace_event = event.model_copy(update=event_param)  # type: ignore
+        if isinstance(event_or_event_id, str):
+            event = self.get_calendar_event(event_id=event_or_event_id)
 
-            return self.calendar_service.update_calendar_event(
-                event_id=replace_event.id,
-                **self.calendar_service.process_event_to_event_param(
-                    event=replace_event
-                ),
-            )
+        replace_event = event.model_copy(update=event_param)  # type: ignore
+
+        return self.calendar_service.update_calendar_event(
+            event_id=replace_event.id,
+            **self.calendar_service.process_event_to_event_param(event=replace_event),
+        )
 
     def get_calendar_event(self, event_id: str) -> Event:
         return self.calendar_service.get_calendar_event(event_id)
@@ -147,14 +149,17 @@ class GoogleCalendarAPI:
         self, replace: bool = False, **event_param: Unpack[ApplicationAddEventParam]
     ) -> Event | None:
         if replace:
-            return self._replace_calendar_event(
-                event=self.get_calendar_events(
-                    time_min=event_param["start_time"],
-                    time_max=event_param["end_time"],
-                    q=event_param["summary"],
-                ).__next__(),
-                **event_param,
-            )
+            try:
+                return self.replace_calendar_event(
+                    event_or_event_id=self.get_calendar_events(
+                        time_min=event_param["start_time"],
+                        time_max=event_param["end_time"],
+                        q=event_param["summary"],
+                    ).__next__(),
+                    **event_param,
+                )
+            except StopIteration:
+                return None
         else:
             return self.calendar_service.add_calendar_event(
                 time_zone=self.time_zone, **event_param
